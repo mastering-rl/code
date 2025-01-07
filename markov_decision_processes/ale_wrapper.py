@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from mastering_rl.markov_decision_processes.mdp import MDP
 
 """
-A wrapper class around the gymnasium class for the Arcade Learning Environment
+A wrapper class around a gymnasium class such as the Arcade Learning Environment
 (https://gymnasium.farama.org/environments/atari/)
 to meet the requirements for the MDP class interface.
 """

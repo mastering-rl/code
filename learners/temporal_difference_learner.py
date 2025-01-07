@@ -25,9 +25,6 @@ class TemporalDifferenceLearner(ModelFreeLearner):
                 delta = self.get_delta(
                     reward, state, action, next_state, next_action, done
                 )
-                delta = self.get_delta(
-                    reward, state, action, next_state, next_action, done
-                )
                 self.qfunction.update(state, action, delta)
 
                 state = next_state

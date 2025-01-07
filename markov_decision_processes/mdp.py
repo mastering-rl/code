@@ -48,7 +48,7 @@ class MDP:
 
     """ Return a new state and a reward for executing action in state,
     based on the underlying probability. This can be used for
-    model-free learning methods, but requires a model to operate.
+    model-free learning methods, but requires a model (get_transitions and get_reward) to operate.
     Override for simulation-based learning
     """
 
