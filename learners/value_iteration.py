@@ -14,7 +14,8 @@ class ValueIteration:
             new_values = TabularValueFunction()
             for state in self.mdp.get_states():
                 qtable = QTable(alpha=1.0)
-                for action in self.mdp.get_actions(state):
+                actions = self.mdp.get_actions(state)
+                for action in actions:
                     # Calculate the value of Q(s,a)
                     new_value = 0.0
                     for new_state, probability in self.mdp.get_transitions(
@@ -32,7 +33,7 @@ class ValueIteration:
                     qtable.update(state, action, new_value)
 
                 # V(s) = max_a Q(sa)
-                max_q = qtable.get_max_q(state, self.mdp.get_actions(state))
+                max_q = qtable.get_max_q(state, actions)
                 delta = max(delta, abs(self.values.get_value(state) - max_q))
                 new_values.add(state, max_q)
 

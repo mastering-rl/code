@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from tests.plot import Plot
+from mastering_rl.tests.plot import Plot
 
 
 def train(

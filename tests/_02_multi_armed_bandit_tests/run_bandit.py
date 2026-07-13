@@ -48,8 +48,7 @@ def run_bandit(bandit, episodes=200, episode_length=500, drift=True):
             qtable.update(
                 state,
                 action,
-                (reward / times_selected[action])
-                - (qtable.get_q_value(state, action) / times_selected[action]),
+                reward - qtable.get_q_value(state, action),
             )
 
         rewards += [episode_rewards]

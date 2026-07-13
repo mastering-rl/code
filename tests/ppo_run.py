@@ -1,15 +1,15 @@
-from ppo import PPO
-from deep_nn_policy import DeepNeuralNetworkPolicy
-from deep_value_function import DeepValueFunction
-from gridworld import GridWorld
-from plot import Plot
+from mastering_rl.ppo import PPO
+from mastering_rl.policies.deep_nn_policy import DeepNeuralNetworkPolicy
+from mastering_rl.value_functions.deep_value_function import DeepValueFunction
+from mastering_rl.markov_decision_processes.gridworld import GridWorld
+from mastering_rl.tests.plot import Plot
 
 gridworld = GridWorld()
 
 # Instantiate the critic
 critic = DeepValueFunction(state_space=len(gridworld.get_initial_state()), hidden_dim=64)
 
-from tabular_value_function import TabularValueFunction
+from mastering_rl.value_functions.tabular_value_function import TabularValueFunction
 critic = TabularValueFunction()
 
 # Instantiate the actor

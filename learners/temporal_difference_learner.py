@@ -31,7 +31,7 @@ class TemporalDifferenceLearner(ModelFreeLearner):
                 action = next_action
                 episode_reward += reward * (self.mdp.get_discount_factor() ** step)
 
-                if done or step == max_episode_length:
+                if done or step == max_episode_length - 1:
                     break
 
             episode_rewards.append(episode_reward)
@@ -53,4 +53,4 @@ class TemporalDifferenceLearner(ModelFreeLearner):
     """ Get the value of a state """
 
     def state_value(self, state, action):
-        abstract
+        raise NotImplementedError()

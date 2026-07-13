@@ -94,7 +94,7 @@ class Plot:
         Calculate the exponential moving mean of a list of rewards
     """
 
-    def get_ema(rewards, smoothing_factor=0.9):
+    def get_ema(rewards, smoothing_factor=0.95):
         smoothed_rewards = []
         for reward in rewards:
             if smoothed_rewards == []:
@@ -147,7 +147,7 @@ class Plot:
         plt.show()
 
     def plot_cumulative_rewards(
-        labels, reward_list, smoothing_factor=0.95, episodes_per_evaluation=1
+        labels, reward_list, smoothing_factor=0.99, episodes_per_evaluation=1
     ):
         x = np.linspace(0, len(reward_list[0]), len(reward_list[0]))
         index = 0
@@ -169,9 +169,7 @@ class Plot:
         plt.grid(color="white", linewidth=1.5)
         plt.show()
 
-    def plot_cumulative_rewards2(
-        labels, reward_list, smoothing_factor=0.95, episodes_per_evaluation=1
-    ):
+    def plot_cumulative_rewards_with_variance(labels, reward_list, smoothing_factor=0.95):
         """
         Plots the average cumulative rewards for each method with variance shading.
 
@@ -179,18 +177,7 @@ class Plot:
         labels: list of strings representing method names.
         reward_list: list of lists of lists of rewards (methods, runs, episodes).
         smoothing_factor: factor used to smooth the rewards curve.
-        episodes_per_evaluation: scaling factor for the x-axis (episodes).
         """
-
-        def get_ema(data, smoothing_factor=0.95):
-            """Calculate Exponential Moving Average for smoothing."""
-            ema = np.zeros_like(data)
-            ema[0] = data[0]
-            for i in range(1, len(data)):
-                ema[i] = (
-                    smoothing_factor * ema[i - 1] + (1 - smoothing_factor) * data[i]
-                )
-            return ema
 
         x = np.linspace(
             0, len(reward_list[0][0]), len(reward_list[0][0])
@@ -198,23 +185,19 @@ class Plot:
         linestyles = ["-", "--", ":", "-."]  # Different line styles for methods
 
         for index, method_rewards in enumerate(reward_list):
-            # Convert method_rewards (runs x episodes) to a numpy array of shape (num_runs, num_episodes)
-            # method_rewards = np.array(method_rewards)
 
             # Smooth rewards for each run first
-            # smoothed_rewards = np.array([get_ema(run, smoothing_factor=smoothing_factor) for run in method_rewards])
             smoothed_rewards = [
-                get_ema(run, smoothing_factor=smoothing_factor)
+                Plot.get_ema(run, smoothing_factor=smoothing_factor)
                 for run in method_rewards
             ]
-
             # Calculate mean and standard deviation of smoothed rewards across runs
             mean_rewards = np.mean(smoothed_rewards, axis=0)
             std_rewards = np.std(smoothed_rewards, axis=0)
 
             # Plot mean rewards for the method
             plt.plot(
-                x * episodes_per_evaluation,
+                x,
                 mean_rewards,
                 label=labels[index],
                 linestyle=linestyles[index % len(linestyles)],
@@ -222,7 +205,7 @@ class Plot:
 
             # Plot shaded area for variance (standard deviation)
             plt.fill_between(
-                x * episodes_per_evaluation,
+                x,
                 mean_rewards - std_rewards,
                 mean_rewards + std_rewards,
                 alpha=0.2,  # Transparency level for the shaded region

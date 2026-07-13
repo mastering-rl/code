@@ -62,7 +62,7 @@ class ALEWrapper(MDP):
     def execute(self, state, action):
         observation, reward, terminated, truncated, info = self.env.step(action)
         self.terminated = terminated or truncated
-        return (self._to_tuple(observation), reward, terminated)
+        return (self._to_tuple(observation), reward, self.terminated)
 
     def _to_tuple(self, observation):
         #if not isinstance(observation, list) and not isinstance(observation, tuple):
@@ -86,7 +86,7 @@ class ALEWrapper(MDP):
             state = next_state
             if step >= start_frame:
                 frames.append(self.render())
-            if done or step == max_episode_length:
+            if done or step == max_episode_length - 1:
                 break
 
         return frames

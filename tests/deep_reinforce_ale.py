@@ -1,12 +1,12 @@
 import torch
-from ale_wrapper import ALEWrapper
+from mastering_rl.markov_decision_processes.ale_wrapper import ALEWrapper
 from mastering_rl.learners.reinforce import REINFORCE
-from deep_nn_policy import DeepNeuralNetworkPolicy
-from stochastic_q_policy import StochasticQPolicy
-from deep_q_function import DeepQFunction
-from multi_armed_bandit.epsilon_decreasing import EpsilonDecreasing
-from tests.train import train
-from tests.plot import Plot
+from mastering_rl.policies.deep_nn_policy import DeepNeuralNetworkPolicy
+from mastering_rl.policies.stochastic_q_policy import StochasticQPolicy
+from mastering_rl.qfunctions.deep_q_function import DeepQFunction
+from mastering_rl.multi_armed_bandit.epsilon_decreasing import EpsilonDecreasing
+from mastering_rl.tests.train import train
+from mastering_rl.tests.plot import Plot
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_device(device)
@@ -25,7 +25,7 @@ mdp = ALEWrapper(version)
 action_space = len(mdp.get_actions())
 state_space = len(mdp.get_initial_state())
 
-runs = 5
+runs = 1
 all_rewards = []
 for _ in range(runs):
     policy = DeepNeuralNetworkPolicy(state_space, action_space)
@@ -38,7 +38,7 @@ for _ in range(runs):
         learner_name="",
         test=False,
         plot=True,
-        #max_episode_length=500,
+        max_episode_length=500,
         epochs=25,
         epoch_size=20,
     )

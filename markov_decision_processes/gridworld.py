@@ -20,7 +20,7 @@ class GridWorld(MDP):
         width=4,
         height=3,
         discount_factor=0.9,
-        blocked_states=[(1, 1)],
+        blocked_states=None,
         action_cost=0.0,
         initial_state=(0, 0),
         goals=None,
@@ -28,7 +28,6 @@ class GridWorld(MDP):
         self.noise = noise
         self.width = width
         self.height = height
-        self.blocked_states = blocked_states
         self.discount_factor = discount_factor
         self.action_cost = action_cost
         self.initial_state = initial_state
@@ -39,6 +38,11 @@ class GridWorld(MDP):
         else:
             self.goal_states = dict(goals)
 
+        if blocked_states is None:
+            self.blocked_states = [(1, 1)]
+        else:
+            self.blocked_states = list(blocked_states)
+        
         # A list of lists that records all rewards given at each step
         # for each episode of a simulated gridworld
         self.rewards = []
@@ -198,7 +202,7 @@ class GridWorld(MDP):
         width = 0
         height = len(string) - 1
 
-        blocked_cells = []
+        blocked_states = []
         initial_state = (0, 0)
         goals = []
         row = 0
@@ -217,7 +221,7 @@ class GridWorld(MDP):
         return GridWorld(
             width=width,
             height=height,
-            blocked_states=blocked_cells,
+            blocked_states=blocked_states,
             initial_state=initial_state,
             goals=goals,
         )
@@ -241,13 +245,13 @@ class GridWorld(MDP):
 
     """ Get a string represnetation of an action """
     def get_action_as_string(self, action):
-        if action == LEFT:
+        if action == self.LEFT:
             return "\u25C4"
-        elif action == UP:
+        elif action == self.UP:
             return "\u25B2"
-        elif action == RIGHT:
+        elif action == self.RIGHT:
             return "\u25BA"
-        elif action == DOWN:
+        elif action == self.DOWN:
             return "\u25BC"
         else:
             return "x"
@@ -490,180 +494,6 @@ class GridWorld(MDP):
                     result += " |       {}       ".format(down_arrow)
             result += " |\n"
             result += line
-        return result
-
-    """ Convert a grid world policy to a formatted string """
-
-    def policy_to_string(self, policy, title=""):
-        arrow_map = {
-            self.UP: "\u25B2",
-            self.DOWN: "\u25BC",
-            self.LEFT: "\u25C4",
-            self.RIGHT: "\u25BA",
-        }
-        line = " {:-^{n}}\n".format("", n=len(" |  N ") * self.width + 1)
-        result = " " + title + "\n"
-        result += line
-        for y in range(self.height - 1, -1, -1):
-            for x in range(self.width):
-                if (x, y) in self.blocked_states:
-                    result += " | ###"
-                elif (
-                    policy.select_action((x, y), self.get_actions((x, y)))
-                    == self.TERMINATE
-                ):
-                    result += " | {:+0d} ".format(self.goal_states[(x, y)])
-                else:
-                    result += (
-                        " |  "
-                        + arrow_map[
-                            policy.select_action((x, y), self.get_actions((x, y)))
-                        ]
-                        + " "
-                    )
-            result += " |\n"
-            result += line
-
-        return result
-
-    """ Return a probability normalised by taking out the terminate action (not visualised) """
-    def get_normalised_probability(self, policy, state):
-        result = dict()
-        result[self.LEFT] = policy.get_probability(state, self.LEFT)
-        result[self.RIGHT] = policy.get_probability(state, self.RIGHT)
-        if self.height > 1:
-            result[self.UP] = policy.get_probability(state, self.UP)
-            result[self.DOWN] = policy.get_probability(state, self.DOWN)
-        else:
-            result[self.UP] = 0.0
-            result[self.DOWN] = 0.0
-        # Normalise to account for the 'terminate' action that is not visualised
-        total = result[self.LEFT] + result[self.RIGHT] + result[self.DOWN] + result[self.UP]
-        if total != 0:
-            result[self.LEFT] = result[self.LEFT] / total
-            result[self.RIGHT] = result[self.RIGHT] / total
-            result[self.DOWN] = result[self.DOWN] / total
-            result[self.UP] = result[self.UP] / total
-        
-        return result
-
-    """ Convert a stochastic policy to a string """
-    def stochastic_policy_to_string(self, policy, title=""):
-        left_arrow = "\u25C4"
-        up_arrow = "\u25B2"
-        right_arrow = "\u25BA"
-        down_arrow = "\u25BC"
-
-        space = " |               "
-
-        line = "  "
-        for x in range(self.width):
-            line += "---------------- "
-        line += "\n"
-
-        result = " " + title + "\n"
-        result += line
-        for y in range(self.height - 1, -1, -1):
-            for x in range(self.width):
-                if (x, y) in self.blocked_states or (
-                    x,
-                    y,
-                ) in self.get_goal_states().keys():
-                    result += space
-                else:
-                    result += " |       {}       ".format(up_arrow)
-            result += " |\n"
-
-            for x in range(self.width):
-                if (x, y) in self.blocked_states or (
-                    x,
-                    y,
-                ) in self.get_goal_states().keys():
-                    result += space
-                else:
-                    probs = self.get_normalised_probability(policy, (x, y))
-                    result += " |     {:+0.2f}     ".format(probs[self.UP])
-            result += " |\n"
-
-            for x in range(self.width):
-                result += space
-            result += " |\n"
-
-            for x in range(self.width):
-                if (x, y) in self.blocked_states:
-                    result += " |     #####     "
-                elif (x, y) in self.get_goal_states().keys():
-                    result += " |     {:+0.2f}     ".format(
-                        self.get_goal_states()[(x, y)]
-                    )
-                else:
-                    probs = self.get_normalised_probability(policy, (x, y))
-                    result += " | {}{:+0.2f}  {:+0.2f}{}".format(
-                        left_arrow,
-                        probs[self.LEFT],
-                        probs[self.RIGHT],
-                        right_arrow,
-                    )
-            result += " |\n"
-
-            for x in range(self.width):
-                result += space
-            result += " |\n"
-
-            for x in range(self.width):
-                if (x, y) in self.blocked_states or (
-                    x,
-                    y,
-                ) in self.get_goal_states().keys():
-                    result += space
-                else:
-                    probs = self.get_normalised_probability(policy, (x, y))
-                    result += " |     {:+0.2f}     ".format(
-                        probs[self.DOWN]
-                    )
-            result += " |\n"
-
-            for x in range(self.width):
-                if (x, y) in self.blocked_states or (
-                    x,
-                    y,
-                ) in self.get_goal_states().keys():
-                    result += space
-                else:
-                    result += " |       {}       ".format(down_arrow)
-            result += " |\n"
-            result += line
-
-        result += "T, L, U, R, D\n"
-        for y in range(self.height - 1, -1, -1):
-            for x in range(self.width):
-                result += str((x,y)) + " --> ["
-                for a in range(0, 5):
-                    result += str(policy.get_probability((x,y), a)) + ","
-                result += "]\n"
-        return result
-
-    """ Convert a grid world policy to a formatted string """
-    def policy_to_string(self, policy, title=""):
-        arrow_map = {self.UP:'\u25B2',
-                     self.DOWN:'\u25BC',
-                     self.LEFT:'\u25C4',
-                     self.RIGHT:'\u25BA',
-                    }
-        line = " {:-^{n}}\n".format("", n=len(" |  N ") * self.width + 1)
-        result = " " + title + "\n"
-        result += line
-        for y in range(self.height - 1, -1, -1):
-            for x in range(self.width):
-                if (x, y) in self.blocked_states:
-                    result += " | ###"
-                elif policy.select_action((x, y), self.get_actions((x, y))) == self.TERMINATE:
-                    result += " | {:+0d} ".format(self.goal_states[(x, y)])
-                else:
-                    result += " |  " + arrow_map[policy.select_action((x, y), self.get_actions((x, y)))] + " "
-            result += " |\n"
-            result += line
-
         return result
 
     """ Return a probability normalised by taking out the terminate action (not visualised) """
@@ -1287,10 +1117,20 @@ class CliffWorld(GridWorld):
         discount_factor=1.0,
         width=6,
         height=4,
-        blocked_states=[],
+        blocked_states=None,
         action_cost=-0.05,
-        goals=[((1, 0), -5), ((2, 0), -5), ((3, 0), -5), ((4, 0), -5), ((5, 0), 0)],
+        goals=None,
     ):
+        if blocked_states is None:
+            blocked_states = []
+        if goals is None:
+            goals = [
+                ((1, 0), -5),
+                ((2, 0), -5),
+                ((3, 0), -5),
+                ((4, 0), -5),
+                ((5, 0), 0),
+            ]
         super().__init__(
             noise=noise,
             discount_factor=discount_factor,

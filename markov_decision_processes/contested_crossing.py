@@ -117,7 +117,7 @@ warnings.filterwarnings("error")
 
 class ContestedCrossing(MDP):
     # labels for actions and states
-    TERMINATE = -1 #"terminate"
+    TERMINATE = SHOOT + 1 #-1 #"terminate"
     TERMINAL = (-1, -1, -1, -1, -1) #("terminal", "terminal", "terminal", "terminal", "terminal")
 
     # state of the single-agent game is given by 5 integers:
@@ -587,7 +587,7 @@ class ContestedCrossing(MDP):
             print(self.to_string(values=flat_values, title=title))
 
     def visualise_q_function(self, qfunction, title="", cell_size=1, gif=False):
-        flat_q = self._make_q_flat(qfunction.qtable)
+        flat_q = self._make_q_flat(qfunction)
         if self.matplotlib_installed():
             return self.visualise_as_image(
                 title=title, cell_size=cell_size, gif=gif, qfunction=flat_q, plot=True
@@ -985,10 +985,10 @@ class ContestedCrossing(MDP):
             SE: (0.1, -0.17),
         }
         text_args = dict(
-            ha="center", va="center", fontsize=cell_size * 3, color="#000000"
+            ha="center", va="center", fontsize=cell_size * 4, color="#000000"
         )
         greyed_args = dict(
-            ha="center", va="center", fontsize=cell_size * 3, color="#00000022"
+            ha="center", va="center", fontsize=cell_size * 4, color="#00000022"
         )
         shoot_text = "{0}\n({1})".format(
             round(qtab[(x, y, SHOOT)]["mean"], 2), round(qtab[(x, y, SHOOT)]["sd"], 2)
@@ -1130,22 +1130,24 @@ class ContestedCrossing(MDP):
                     flat_values[(x, y)]["key_vals"][vals[v]].append(v[2:])
         return flat_values
 
-    def _make_q_flat(self, qtable):
+    ''' Flatten the Q-function by combining multiple states on the same (x, y) location.
+    '''
+    def _make_q_flat(self, qfunction):
         flat_values = {}
         for x in range(self.width):
             for y in range(self.height):
-                for act in self.get_actions():
+                for action in self.get_actions():
                     vals = {
-                        k: qtable[k]
-                        for k in qtable
-                        if k[0][0] == x and k[0][1] == y and k[1] == act
+                        (state, action): qfunction.get_q_value(state, action)
+                        for state in self.get_states()
+                        if state[0] == x and state[1] == y
                     }
-                    flat_values[(x, y, act)] = {}
+                    flat_values[(x, y, action)] = {}
                     xyavals = [vals[v] for v in vals]
-                    flat_values[(x, y, act)]["mean"] = (
+                    flat_values[(x, y, action)]["mean"] = (
                         0.0 if xyavals == [] else np.mean(xyavals)
                     )
-                    flat_values[(x, y, act)]["sd"] = (
+                    flat_values[(x, y, action)]["sd"] = (
                         0.0 if xyavals == [] else np.std(xyavals)
                     )
         return flat_values

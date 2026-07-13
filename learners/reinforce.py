@@ -12,8 +12,6 @@ class REINFORCE(ModelFreeLearner):
     """ Generate and store an entire episode trajectory to use to update the policy """
 
     def execute(self, episodes=100, max_episode_length=float("inf")):
-        total_steps = 0
-        random_steps = 50
         episode_rewards = []
         for episode in range(episodes):
             actions = []
@@ -32,10 +30,9 @@ class REINFORCE(ModelFreeLearner):
                 rewards.append(reward)
 
                 state = next_state
-                episode_reward += reward * (self.mdp.discount_factor**step)
-                total_steps += 1
+                episode_reward += reward * (self.mdp.get_discount_factor() ** step)
 
-                if done or step == max_episode_length:
+                if done or step == max_episode_length - 1:
                     break
 
             deltas = self.calculate_deltas(rewards)

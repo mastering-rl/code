@@ -14,7 +14,6 @@ class ActorCritic(ModelFreeLearner):
         for episode in range(episodes):
             actions = []
             states = []
-            rewards = []
             deltas = []
 
             state = self.mdp.get_initial_state()
@@ -33,14 +32,13 @@ class ActorCritic(ModelFreeLearner):
                 # Store the information from this step of the trajectory
                 states.append(state)
                 actions.append(action)
-                rewards.append(reward)
                 deltas.append(delta)
 
                 state = next_state
                 action = next_action
                 episode_reward += reward * (self.mdp.get_discount_factor() ** step)
 
-                if done or step == max_episode_length:
+                if done or step == max_episode_length - 1:
                     break
 
             self.update_critic(states, actions, deltas)
@@ -74,7 +72,10 @@ class ActorCritic(ModelFreeLearner):
         return delta
 
     def update_actor(self, states, actions, deltas):
-        abstract
+        raise NotImplementedError()
 
     def update_critic(self, states, actions, deltas):
-        abstract
+        raise NotImplementedError()
+
+    def state_value(self, state, action):
+        raise NotImplementedError()

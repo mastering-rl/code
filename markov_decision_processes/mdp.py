@@ -5,46 +5,46 @@ class MDP:
     """Return all states of this MDP"""
 
     def get_states(self):
-        abstract
+        raise NotImplementedError()
 
     """ Return all actions with non-zero probability from this state """
 
     def get_actions(self, state):
-        abstract
+        raise NotImplementedError()
 
     """ Return all non-zero probability transitions for this action
         from this state, as a list of (state, probability) pairs
     """
 
     def get_transitions(self, state, action):
-        abstract
+        raise NotImplementedError()
 
     """ Return the reward for transitioning from state to
         nextState via action
     """
 
     def get_reward(self, state, action, next_state):
-        abstract
+        raise NotImplementedError()
 
     """ Return true if and only if state is a terminal state of this MDP """
 
     def is_terminal(self, state):
-        abstract
+        raise NotImplementedError()
 
     """ Return the discount factor for this MDP """
 
     def get_discount_factor(self):
-        abstract
+        raise NotImplementedError()
 
     """ Return the initial state of this MDP """
 
     def get_initial_state(self):
-        abstract
+        raise NotImplementedError()
 
     """ Return all goal states of this MDP """
 
     def get_goal_states(self):
-        abstract
+        raise NotImplementedError()
 
     """ Return a new state and a reward for executing action in state,
     based on the underlying probability. This can be used for
@@ -92,7 +92,7 @@ class MDP:
                 cumulative_reward += reward * (self.discount_factor**step)
                 state = next_state
 
-                if done or step == max_episode_length:
+                if done or step == max_episode_length - 1:
                     break
 
             cumulative_rewards += [cumulative_reward]
