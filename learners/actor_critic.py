@@ -1,4 +1,5 @@
 from itertools import count
+from abc import ABC, abstractmethod
 
 from mastering_rl.learners.model_free_learner import ModelFreeLearner
 
@@ -12,10 +13,6 @@ class ActorCritic(ModelFreeLearner):
     def execute(self, episodes=100, max_episode_length=float("inf")):
         episode_rewards = []
         for episode in range(episodes):
-            actions = []
-            states = []
-            deltas = []
-
             state = self.mdp.get_initial_state()
             action = self.actor.select_action(state, self.mdp.get_actions(state))
             episode_reward = 0.0
@@ -29,10 +26,11 @@ class ActorCritic(ModelFreeLearner):
                     reward, state, action, next_state, next_action, done
                 )
 
-                # Store the information from this step of the trajectory
-                states.append(state)
-                actions.append(action)
-                deltas.append(delta)
+                # Update both models immediately using the current transition.
+                self.update_critic([state], [action], [delta])
+                self.update_actor(
+                    [state], [action], [delta], action_spaces=[self.mdp.get_actions(state)]
+                )
 
                 state = next_state
                 action = next_action
@@ -40,9 +38,6 @@ class ActorCritic(ModelFreeLearner):
 
                 if done or step == max_episode_length - 1:
                     break
-
-            self.update_critic(states, actions, deltas)
-            self.update_actor(states, actions, deltas)
             episode_rewards.append(episode_reward)
 
         return episode_rewards
@@ -71,11 +66,14 @@ class ActorCritic(ModelFreeLearner):
         )
         return delta
 
-    def update_actor(self, states, actions, deltas):
-        raise NotImplementedError()
+    @abstractmethod
+    def update_actor(self, states, actions, deltas, action_spaces=None):
+        pass
 
+    @abstractmethod
     def update_critic(self, states, actions, deltas):
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def state_value(self, state, action):
-        raise NotImplementedError()
+        pass

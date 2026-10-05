@@ -1,18 +1,20 @@
 import torch
 import numpy as np
-import matplotlib.pyplot as plt
+import cv2
 
-from q_actor_critic import QActorCritic
-from deep_nn_policy import DeepNeuralNetworkPolicy
-from deep_q_function import DeepQFunction
-from ale_wrapper import ALEWrapper
-from tests.plot import Plot
+from mastering_rl.markov_decision_processes.ale_wrapper import ALEWrapper
+from mastering_rl.learners.q_actor_critic import QActorCritic
+from mastering_rl.policies.deep_nn_policy import DeepNeuralNetworkPolicy
+from mastering_rl.policies.stochastic_q_policy import StochasticQPolicy
+from mastering_rl.qfunctions.deep_q_function import DeepQFunction
+from mastering_rl.multi_armed_bandit.epsilon_decreasing import EpsilonDecreasing
+from mastering_rl.tests.train import train
+from mastering_rl.tests.plot import Plot
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_device(device)
 
 
-plt.ion()  # Turn on interactive mode for real-time plotting
 
 #version = "ALE/Frogger-ram-v5"
 #policy_name = "Frogger_21Sept.policy"
@@ -23,10 +25,12 @@ plt.ion()  # Turn on interactive mode for real-time plotting
 #version = "Riverraid-ramNoFrameskip-v4"
 #version = "Freeway-ramDeterministic-v4"
 #policy_name = "Riverraid-v4.policy"
-version = 'CartPole-v1'
-policy_name = "CartPole.policy"
-#version = "LunarLander-v2"
+#version = 'CartPole-v1'
+#policy_name = "CartPole.policy"
+version = "LunarLander-v3"
+policy_name = "LunarLander-v3.policy"
 #version = "Taxi-v3"
+#policy_name = "Taxi-v3.policy"
 
 mdp = ALEWrapper(version=version)
 
@@ -35,49 +39,49 @@ action_space = len(mdp.get_actions())
 state_space = len(mdp.get_initial_state())
 
 runs = 1
-epochs = 200
-epoch_size = 10
 all_rewards = []
-best_reward = float('-inf')
-for i in range(runs):
+for _ in range(runs):
 
-    # Instantiate the critic
+        # Instantiate the critic
     critic = DeepQFunction(state_space, action_space)
 
     # Instantiate the actor
     actor = DeepNeuralNetworkPolicy(state_space, action_space)
 
-    advantage_actor_critic = QActorCritic(mdp, actor, critic)
-    train_rewards = []
-    test_rewards = []
-    for epoch in range(1, epochs + 1):
-        train_rewards += advantage_actor_critic.execute(epoch_size, max_episode_length=500)
+    learner = QActorCritic(mdp, actor, critic)
 
-        test_rewards += mdp.execute_policy(actor, episodes=epoch_size)
-        print(
-            f"| Epoch: {epoch} | Train reward: {np.mean(train_rewards[-epoch_size:])} | Test reward: {np.mean(test_rewards[-epoch_size:])} |"
-        )
-
-        # If this is the best training reward so far, save the policy
-        if np.mean(test_rewards[-epoch_size:]) > best_reward:
-            actor.save(policy_name)
-            best_reward = np.mean(test_rewards[-epoch_size:])
-            print(f"Saving {policy_name}")
-        
-        plt.clf()  # Clear the current figure 
-        labels = ["QAC train rewards", "QAC test reward"]
-        Plot.plot_cumulative_rewards(labels, [train_rewards, test_rewards], smoothing_factor=0.9)
-        plt.draw()
-        plt.pause(0.1)
-
+    train_rewards, test_rewards = train(
+        mdp,
+        actor,
+        policy_name,
+        learner,
+        learner_name="",
+        test=True,
+        plot=True,
+        #max_episode_length=500,
+        epochs=100,
+        epoch_size=20,
+    )
     all_rewards.append(test_rewards)
 
-plt.clf()  # Clear the current figure
-plt.ioff() 
-
-mdp = ALEWrapper(version=version, render_mode="human")
-actor = DeepNeuralNetworkPolicy.load(state_space, action_space, policy_name)
-exec_rewards = mdp.execute_policy(actor, episodes=1)
-
-labels = ["QAC test rewards " + str(i) for i in range(runs)]
+labels = ["Q Actor Critic " + str(i) for i in range(runs)]
 Plot.plot_cumulative_rewards(labels, all_rewards, smoothing_factor=0.9)
+
+# Record 5 evaluation episodes into a single video file.
+actor.set_stochastic(False)
+all_frames = []
+for _ in range(5):
+    all_frames.extend(mdp.get_frames(actor, max_episode_length=500))
+
+if all_frames:
+    height, width = all_frames[0].shape[:2]
+    video_writer = cv2.VideoWriter(
+        "episode.mp4", cv2.VideoWriter_fourcc(*"mp4v"), 30, (width, height)
+    )
+    for frame in all_frames:
+        video_writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+    video_writer.release()
+    print("Saved 5 episodes to episode.mp4")
+
+
+

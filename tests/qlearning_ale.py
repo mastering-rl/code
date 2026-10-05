@@ -4,8 +4,6 @@ from tests.plot import Plot
 
 from mastering_rl.learners.qlearning import QLearning
 from mastering_rl.markov_decision_processes.ale_wrapper import ALEWrapper
-from mastering_rl.markov_decision_processes.freeway import Freeway
-from mastering_rl.markov_decision_processes.freeway_abstraction import FreewayAbstraction
 from mastering_rl.policies.stochastic_q_policy import StochasticQPolicy
 from mastering_rl.qfunctions.deep_q_function import DeepQFunction
 

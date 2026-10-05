@@ -11,7 +11,7 @@ class PolicyGradient(ModelFreeLearner):
 
     """ Generate and store an entire episode trajectory to use to update the policy """
 
-    def execute(self, episodes=100, max_episode_length=float("inf")):
+    def execute(self, episodes=100, max_episode_length=100):
         episode_rewards = []
         for episode in range(episodes):
             actions = []

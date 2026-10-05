@@ -15,7 +15,7 @@ to meet the requirements for the MDP class interface.
 
 
 class ALEWrapper(MDP):
-    def __init__(self, version, render_mode="rgb_array", discount_factor=1.0):
+    def __init__(self, version, render_mode="rgb_array", discount_factor=0.99):
         self.env = gym.make(version, render_mode=render_mode)
         observation, info = self.env.reset()
         self.terminated = False

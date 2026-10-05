@@ -11,53 +11,21 @@ Transition = namedtuple(
 )
 
 
-class ReplayMemory:
-    def __init__(self, memory_size=10000):
-        self.memory = deque([], maxlen=memory_size)
+class ReplayBuffer:
+    def __init__(self, buffer_size=10000):
+        self.buffer = deque([], maxlen=buffer_size)
 
     def push(self, state, action, next_state, reward, done, delta):
-        self.memory.append(Transition(state, action, next_state, reward, done, delta))
+        self.buffer.append(Transition(state, action, next_state, reward, done, delta))
 
     def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
+        return random.sample(self.buffer, batch_size)
     
     def update_priorities(self, errors):
         pass
 
     def __len__(self):
-        return len(self.memory)
-
-
-class PrioritisedReplayMemory:
-    def __init__(self, memory_size=10000, alpha=0.6):
-        self.memory = deque([], maxlen=memory_size)
-        self.priorities = deque([], maxlen=memory_size)
-        self.alpha = alpha
-
-    def push(self, state, action, next_state, reward, done, delta=1.0):
-        self.memory.append(Transition(state, action, next_state, reward, done, delta))
-        self.priorities.append(abs(delta) ** self.alpha)
-
-    def sample(self, batch_size, beta=0.4):
-        priorities = np.array(self.priorities)
-        sum = priorities.sum()
-        if sum == 0:
-            # Sample uniformly if all values are 0
-            self.indices = np.random.choice(len(self.memory), batch_size)
-        else:
-            probs = priorities / sum
-            self.indices = np.random.choice(len(self.memory), batch_size, p=probs)
-        samples = [self.memory[idx] for idx in self.indices]
-        #importance_sampling_weights = (len(self.memory) * probs[self.indices]) ** (-beta)
-        #importance_sampling_weights /= importance_sampling_weights.max()
-        return samples #, indices, importance_sampling_weights
-
-    def update_priorities(self, errors):
-        for idx, error in zip(self.indices, errors):
-            self.priorities[idx] = abs(error) ** self.alpha
-
-    def __len__(self):
-        return len(self.memory)
+        return len(self.buffer)
 
 class ExperienceReplayLearner(ModelFreeLearner):
     def __init__(
@@ -66,9 +34,9 @@ class ExperienceReplayLearner(ModelFreeLearner):
         bandit,
         policy_qfunction,
         target_qfunction,
-        memory=None,
+        buffer=None,
         batch_size=64,
-        memory_size=10000,
+        buffer_size=10000,
         update_period=4,
         min_replay_size=1000,
         target_update_tau=0.01,
@@ -78,7 +46,7 @@ class ExperienceReplayLearner(ModelFreeLearner):
         self.policy_qfunction = policy_qfunction
         self.target_qfunction = target_qfunction
         self.batch_size = batch_size
-        self.memory = ReplayMemory(memory_size=memory_size) if memory is None else memory
+        self.buffer = ReplayBuffer(buffer_size=buffer_size) if buffer is None else buffer
         self.update_period = update_period
         self.min_replay_size = min_replay_size
         self.target_update_tau = target_update_tau
@@ -102,11 +70,11 @@ class ExperienceReplayLearner(ModelFreeLearner):
                 terminal = done or reached_episode_limit
 
                 delta = self.get_delta(reward, state, action, next_state, terminal)
-                self.memory.push(state, action, next_state, reward, terminal, delta)
+                self.buffer.push(state, action, next_state, reward, terminal, delta)
 
                 # Perform an update on the policy qfunction using a batch
-                if len(self.memory) >= max(self.batch_size, self.min_replay_size):
-                    transitions = self.memory.sample(self.batch_size)
+                if len(self.buffer) >= max(self.batch_size, self.min_replay_size):
+                    transitions = self.buffer.sample(self.batch_size)
                     batch = Transition(*zip(*transitions))
 
                     deltas = self.get_deltas(
@@ -121,10 +89,10 @@ class ExperienceReplayLearner(ModelFreeLearner):
                         batch.state, batch.action, deltas
                     )
 
-                    self.memory.update_priorities(deltas)
+                    self.buffer.update_priorities(deltas)
 
                 if (
-                    len(self.memory) >= max(self.batch_size, self.min_replay_size)
+                    len(self.buffer) >= max(self.batch_size, self.min_replay_size)
                     and (step + 1) % self.update_period == 0
                 ):
                     # Soft update of the target Q-function

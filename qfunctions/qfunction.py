@@ -1,26 +1,31 @@
+from abc import ABC, abstractmethod
 import random
 
 
-class QFunction:
+class QFunction(ABC):
     """Update the Q-value of (state, action) by delta"""
 
+    @abstractmethod
     def update(self, state, action, delta):
-        abstract
+        pass
 
     """ Get a Q value for a given state-action pair """
 
+    @abstractmethod
     def get_q_value(self, state, action):
-        abstract
+        pass
 
-    """ Save a policy to a specified filename """
+    """ Save a Q-function to a specified filename """
 
-    def save_policy(self, filename):
-        abstract
+    @abstractmethod
+    def save(self, filename):
+        pass
 
-    """ Load a policy from a specified filename """
+    """ Load a Q-function from a specified filename """
 
-    def load_policy(self, filename):
-        abstract
+    @abstractmethod
+    def load(self, filename):
+        pass
 
     """ Return the action with the maximum Q-value """
 

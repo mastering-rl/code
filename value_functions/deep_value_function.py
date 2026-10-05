@@ -72,3 +72,9 @@ class DeepValueFunction(ValueFunction):
         with torch.no_grad():
             values = self.value_network(states_tensor)
         return values.squeeze(1).tolist()
+
+    def save(self, filename):
+        torch.save(self.value_network.state_dict(), filename)
+
+    def load(self, filename):
+        self.value_network.load_state_dict(torch.load(filename))

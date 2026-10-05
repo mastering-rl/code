@@ -210,7 +210,7 @@ class GridWorld(MDP):
             column = 0
             for cell in next_row:
                 if cell == "#":
-                    blocked_cells += [(column, row)]
+                    blocked_states += [(column, row)]
                 elif cell == "@":
                     initial_state = (column, row)
                 elif cell.isalpha():

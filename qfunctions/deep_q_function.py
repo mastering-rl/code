@@ -16,6 +16,8 @@ class DeepQFunction(QFunction):
 
         # Assign the provided device to q_network
         self.device = device
+        self.state_space = state_space
+        self.action_space = action_space
         self.q_network = nn.Sequential(
             nn.Linear(in_features=state_space, out_features=hidden_dim),
             nn.ReLU(),
@@ -39,6 +41,9 @@ class DeepQFunction(QFunction):
         self.q_network.to(device)
         return self
 
+    def reset(self):
+        self.initialize_weights()
+
     def update(self, state, action, delta):
         return self.batch_update([state], [action], [delta])
 
@@ -47,7 +52,6 @@ class DeepQFunction(QFunction):
         return self.batch_update(states, actions, deltas)
 
     def batch_update(self, states, actions, deltas):
-        # Materialize dense arrays first to avoid slow tensor creation from lists of ndarrays.
         states_tensor = torch.as_tensor(np.asarray(states, dtype=np.float32)).to(self.device)
         actions_tensor = torch.as_tensor(np.asarray(actions, dtype=np.int64)).to(self.device)
         deltas_tensor = torch.as_tensor(np.asarray(deltas, dtype=np.float32)).to(self.device)
@@ -58,7 +62,7 @@ class DeepQFunction(QFunction):
             .squeeze(1)
         )
 
-        # DQN target is current Q estimate plus TD error (delta).
+        # Construct the target values
         targets_tensor = q_values.detach() + deltas_tensor
 
         loss = nn.functional.mse_loss(
@@ -129,7 +133,15 @@ class DeepQFunction(QFunction):
         self.q_network.load_state_dict(target_dict)
 
     def save(self, filename):
-        torch.save(self.q_network.state_dict(), filename)
+        torch.save({
+            'state_space': self.state_space,
+            'action_space': self.action_space,
+            'state_dict': self.q_network.state_dict(),
+        }, filename)
 
-    def load(self, filename):
-        self.q_network.load_state_dict(torch.load(filename))
+    @classmethod
+    def load(cls, filename):
+        checkpoint = torch.load(filename)
+        qfunction = cls(checkpoint['state_space'], checkpoint['action_space'])
+        qfunction.q_network.load_state_dict(checkpoint['state_dict'])
+        return qfunction

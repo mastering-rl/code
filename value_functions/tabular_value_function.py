@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 
 from mastering_rl.value_functions.value_function import ValueFunction
@@ -28,3 +29,32 @@ class TabularValueFunction(ValueFunction):
     def get_values(self, states):
         return [self.get_value(state) for state in states]
 
+    def load(self, filename):
+        import json
+
+        with open(filename, "r") as file:
+            serialised = json.load(file)
+            self.value_table = defaultdict(lambda: serialised[0])
+            for key, value in serialised.items():
+                try:
+                    parsed_key = eval(key)
+                except Exception:
+                    parsed_key = key
+                self.value_table[parsed_key] = value
+
+    def save(self, filename):
+        with open(filename, "w") as file:
+            serialised = {
+                str(key): value for key, value in self.value_table.items()
+            }
+            json.dump(serialised, file)
+
+    def load(self, filename, default=0.0):
+        with open(filename, "r") as file:
+            serialised = json.load(file)
+            self.value_table = defaultdict(
+                lambda: default,
+                {tuple(eval(key)): value for key, value in serialised.items()},
+            )
+
+    

@@ -1,4 +1,6 @@
 import torch
+import cv2
+
 from mastering_rl.markov_decision_processes.ale_wrapper import ALEWrapper
 from mastering_rl.learners.reinforce import REINFORCE
 from mastering_rl.policies.deep_nn_policy import DeepNeuralNetworkPolicy
@@ -19,6 +21,12 @@ policy_name = "CartPole.policy"
 #version = 'ALE/Frostbite-ram-v5'
 #policy_name = "Frostbite.policy"
 
+#version = "LunarLander-v3"
+#policy_name = "LunarLander-v3.policy"
+
+#version = "LunarLander-v3"
+#policy_name = "LunarLander-v3.policy"
+
 mdp = ALEWrapper(version)
 
 # Get number of actions and state size from gym action space
@@ -36,13 +44,30 @@ for _ in range(runs):
         policy_name,
         learner,
         learner_name="",
-        test=False,
+        test=True,
         plot=True,
         max_episode_length=500,
-        epochs=25,
+        epochs=50,
         epoch_size=20,
     )
-    all_rewards.append(train_rewards)
+    all_rewards.append(test_rewards)
 
 labels = ["REINFORCE " + str(i) for i in range(runs)]
 Plot.plot_cumulative_rewards(labels, all_rewards, smoothing_factor=0.9)
+
+
+# Record 5 evaluation episodes into a single video file.
+policy.set_stochastic(False)
+all_frames = []
+for _ in range(5):
+    all_frames.extend(mdp.get_frames(policy, max_episode_length=500))
+
+if all_frames:
+    height, width = all_frames[0].shape[:2]
+    video_writer = cv2.VideoWriter(
+        "episode.mp4", cv2.VideoWriter_fourcc(*"mp4v"), 30, (width, height)
+    )
+    for frame in all_frames:
+        video_writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+    video_writer.release()
+    print("Saved 5 episodes to episode.mp4")

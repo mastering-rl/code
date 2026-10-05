@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from itertools import count
 
 from mastering_rl.learners.model_free_learner import ModelFreeLearner
@@ -38,8 +39,6 @@ class TemporalDifferenceLearner(ModelFreeLearner):
 
         return episode_rewards
 
-    """ Calculate the delta for the update """
-
     def get_delta(self, reward, state, action, next_state, next_action, done):
         q_value = self.qfunction.get_q_value(state, action)
         next_state_value = self.state_value(next_state, next_action)
@@ -49,8 +48,7 @@ class TemporalDifferenceLearner(ModelFreeLearner):
             - q_value
         )
         return delta
-
-    """ Get the value of a state """
-
+        
+    @abstractmethod
     def state_value(self, state, action):
-        raise NotImplementedError()
+        pass

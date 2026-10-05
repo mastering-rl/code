@@ -17,3 +17,13 @@ class StochasticQPolicy(StochasticPolicy):
 
     def update(self, states, actions, deltas):
         self.qfunction.batch_update(states, actions, deltas)
+
+    def save(self, filename):
+        self.qfunction.save(filename)
+
+    def get_probability(self, state, action):
+        raise NotImplementedError("get_probability not implemented for StochasticQPolicy.")
+
+    @staticmethod
+    def load(qfunction, filename):
+        raise NotImplementedError("Loading a StochasticQPolicy is not implemented. Load the qfunction and create a StochasticQPolicy.")

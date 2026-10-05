@@ -1,8 +1,11 @@
+from abc import abstractmethod
+
 class MultiArmedBandit:
     """Select an action for this state given from a list given a Q-function"""
 
+    @abstractmethod
     def select(self, state, actions, qfunction):
-        abstract
+        pass
 
     """ Reset a multi-armed bandit to its initial configuration """
 

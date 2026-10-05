@@ -6,8 +6,8 @@ class AdvantageActorCritic(ActorCritic):
     def __init__(self, mdp, actor, critic):
         super().__init__(mdp, actor, critic)
 
-    def update_actor(self, states, actions, deltas):
-        self.actor.update(states, actions, deltas)
+    def update_actor(self, states, actions, deltas, action_spaces=None):
+        self.actor.update(states, actions, deltas, action_spaces=action_spaces)
 
     def update_critic(self, states, actions, deltas):
         self.critic.batch_update(states, deltas)

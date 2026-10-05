@@ -12,6 +12,12 @@ class ValueFunction:
     def get_value(self, state):
         abstract
 
+    def load(self, filename):
+        abstract
+
+    def save(self, filename):
+        abstract
+
     """ Return the Q-value of action in state """
 
     def get_q_value(self, mdp, state, action):

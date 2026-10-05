@@ -1,5 +1,6 @@
 import math
 import random
+import json
 
 from mastering_rl.policies.policy import StochasticPolicy
 
@@ -18,6 +19,7 @@ class LogisticRegressionPolicy(StochasticPolicy):
         if theta is None:
             theta = [0.0 for _ in range(num_params)]
         self.theta = theta
+        self.stochastic = True
 
     """ Select one of the two actions using the logistic function for the given state """
 
@@ -25,10 +27,15 @@ class LogisticRegressionPolicy(StochasticPolicy):
         # Get the probability of selecting the first action
         probability = self.get_probability(state, self.actions[0])
 
-        # With a probability of 'probability' take the first action
-        if random.random() < probability:
-            return self.actions[0]
-        return self.actions[1]
+        if self.stochastic:
+            # With a probability of 'probability' take the first action
+            if random.random() < probability:
+                return self.actions[0]
+            return self.actions[1]
+        else:
+            if probability >= 0.5:
+                return self.actions[0]
+            return self.actions[1]
 
     """ Update our policy parameters according using the gradient descent formula:
           theta <- theta + alpha * G * nabla J(theta), 
@@ -56,6 +63,9 @@ class LogisticRegressionPolicy(StochasticPolicy):
             return probability
         return 1 - probability
 
+    def reset(self):
+        theta = [0.0 for _ in range(len(self.theta))]
+    
     """ Computes the gradient of the log of the policy (pi),
     which is needed to get the gradient of the objective (J).
     Because the policy is a logistic regression, using the policy parameters (theta).
@@ -71,6 +81,20 @@ class LogisticRegressionPolicy(StochasticPolicy):
         if action == self.actions[0]:
             return [s_i - s_i * self.logistic_function(y) for s_i in state]
         return [-s_i * self.logistic_function(y) for s_i in state]
+
+
+    def reset(self):
+        self.theta = [0.0 for _ in range(len(self.theta))]
+
+    def save(self, filename):
+        with open(filename, 'w') as f:
+            json.dump({'alpha': self.alpha, 'weights': self.weights}, f)
+
+    @classmethod
+    def load(cls, features, filename):
+        with open(filename, 'r') as f:
+            data = json.load(f)
+        return cls(features, alpha=data['alpha'], weights=data['weights'])
 
     """ Standard logistic function """
 

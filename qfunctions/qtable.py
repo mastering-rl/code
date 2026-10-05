@@ -6,7 +6,8 @@ from mastering_rl.qfunctions.qfunction import QFunction
 
 class QTable(QFunction):
     def __init__(self, alpha=0.1, default_q_value=0.0):
-        self.qtable = defaultdict(lambda: default_q_value)
+        self.default_q_value = default_q_value
+        self.qtable = defaultdict(lambda: self.default_q_value)
         self.alpha = alpha
 
     def update(self, state, action, delta):
@@ -16,6 +17,12 @@ class QTable(QFunction):
         for state, action, delta in zip(states, actions, deltas):
             self.update(state, action, delta)
 
+    def soft_update(self, policy_qfunction, tau=0.01):
+        for (state, action), q_value in policy_qfunction.qtable.items():
+            self.qtable[(state, action)] = (
+                tau * q_value + (1 - tau) * self.qtable[(state, action)]
+            )
+
     def get_q_value(self, state, action):
         return self.qtable[(state, action)]
 
@@ -23,6 +30,9 @@ class QTable(QFunction):
         return [
             self.get_q_value(state, action) for state, action in zip(states, actions)
         ]
+
+    def reset(self):
+        self.qtable = defaultdict(lambda: self.default_q_value)
 
     def save(self, filename):
         with open(filename, "w") as file:

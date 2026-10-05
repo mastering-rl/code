@@ -31,14 +31,14 @@ def train(
             test_rewards += mdp.execute_policy(policy, episodes=epoch_size, max_episode_length=max_episode_length)
             policy.set_stochastic(True)
             all_rewards.append(test_rewards)
-            labels.append(learner_name + "test reward")
+            labels.append(learner_name + " test rewards")
             log_message += f" | Test reward: {np.mean(test_rewards[-epoch_size:])} |"
             policy_rewards = test_rewards
         print(log_message)
 
         # If this is the best reward so far, save the policy
         if np.mean(policy_rewards[-epoch_size:]) > best_reward:
-            policy.save(policy_name)
+            policy.save("policies/" + policy_name)
             best_reward = np.mean(policy_rewards[-epoch_size:])
             print(f"Saving {policy_name}")
 

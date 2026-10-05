@@ -43,13 +43,6 @@ class DeepNeuralNetworkPolicy(StochasticPolicy):
                 nn.init.xavier_uniform_(layer.weight)
                 nn.init.zeros_(layer.bias)
 
-        # Ensure the last layer outputs logits close to zero
-        last_layer = self.policy_network[-1]
-        if isinstance(last_layer, nn.Linear):
-            with torch.no_grad():
-                last_layer.weight.fill_(0)
-                last_layer.bias.fill_(0)
-
     """ Select an action using a forward pass through the network """
 
     def select_action(self, state, actions):
@@ -57,19 +50,14 @@ class DeepNeuralNetworkPolicy(StochasticPolicy):
         with torch.no_grad():
             action_logits = self.policy_network(state)
 
-        # Mark out the actions that are unavailable
-        mask = torch.full_like(action_logits, float("-inf"))
-        mask[actions] = 0
-        masked_logits = action_logits + mask
-
-        action_probabilities = torch.softmax(masked_logits, dim=-1)
+        masked_logits = self._mask_logits(action_logits, actions)
         if self.stochastic:
             # Sample an action according to the probability distribution
-            dist = Categorical(action_probabilities)
+            dist = Categorical(logits=masked_logits)
             action = dist.sample()
         else:
             # Choose the action with the highest probability
-            action = torch.argmax(action_probabilities)
+            action = torch.argmax(masked_logits)
         return action.item()
 
     """ Get the probability of an action being selected in a state """
@@ -85,40 +73,70 @@ class DeepNeuralNetworkPolicy(StochasticPolicy):
         # Convert from a tensor encoding back to the action space
         return probabilities[action]
 
-    def evaluate_actions(self, states, actions):
+    def _mask_logits(self, action_logits, actions):
+        mask = torch.full_like(action_logits, float("-inf"))
+        mask[actions] = 0
+        return action_logits + mask
+
+    def evaluate_actions(self, states, actions, action_spaces=None):
         action_logits = self.policy_network(states)
+        if action_spaces is not None:
+            masked_logits = []
+            for logits, valid_actions in zip(action_logits, action_spaces):
+                masked_logits.append(self._mask_logits(logits, valid_actions))
+            action_logits = torch.stack(masked_logits)
+
         action_distribution = Categorical(logits=action_logits)
-        log_prob = action_distribution.log_prob(actions.squeeze(-1))
+        log_prob = action_distribution.log_prob(actions)
         return log_prob
 
-    def update(self, states, actions, deltas):
-        # Convert to tensors to use in the network
-        deltas_tensor = torch.as_tensor(deltas, dtype=torch.float32)
+    def update(self, states, actions, deltas, action_spaces=None, entropy_coeff=0.01):
+        deltas_tensor = torch.as_tensor(deltas, dtype=torch.float32).view(-1)
         states_tensor = torch.as_tensor(states, dtype=torch.float32)
-        actions_tensor = torch.as_tensor(actions)
+        actions_tensor = torch.as_tensor(actions, dtype=torch.long).view(-1)
 
-        action_log_probs = self.evaluate_actions(states_tensor, actions_tensor)
+        if deltas_tensor.numel() > 1:
+            deltas_tensor = (deltas_tensor - deltas_tensor.mean()) / (
+                deltas_tensor.std(unbiased=False) + 1e-8
+            )
+        deltas_tensor = torch.clamp(deltas_tensor, min=-10.0, max=10.0)
 
-        # Construct a loss function, using negative because we want to descend,
-        # not ascend the gradient
-        loss = -(action_log_probs * deltas_tensor).sum()
+        # Single forward pass for both log-prob and entropy
+        action_logits = self.policy_network(states_tensor)
+        if action_spaces is not None:
+            masked_logits = []
+            for logits, valid_actions in zip(action_logits, action_spaces):
+                masked_logits.append(self._mask_logits(logits, valid_actions))
+            action_logits = torch.stack(masked_logits)
+
+        dist = Categorical(logits=action_logits)
+        action_log_probs = dist.log_prob(actions_tensor)
+        entropy = dist.entropy().mean()
+
+        loss = -(action_log_probs * deltas_tensor.detach()).mean() - entropy_coeff * entropy
 
         self.optimiser.zero_grad()
         loss.backward()
-
-        torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), 100)
-
+        torch.nn.utils.clip_grad_norm_(self.policy_network.parameters(), max_norm=1.0)
         self.optimiser.step()
         return loss
 
     def set_stochastic(self, stochastic):
         self.stochastic = stochastic
 
+    def reset(self):
+        self._initialize_weights()
+
     def save(self, filename):
-        torch.save(self.policy_network.state_dict(), filename)
+        torch.save({
+            'state_space': self.state_space,
+            'action_space': self.action_space,
+            'state_dict': self.policy_network.state_dict(),
+        }, filename)
 
     @classmethod
-    def load(cls, state_space, action_space, filename):
-        policy = cls(state_space, action_space)
-        policy.policy_network.load_state_dict(torch.load(filename))
+    def load(cls, filename):
+        checkpoint = torch.load(filename)
+        policy = cls(checkpoint['state_space'], checkpoint['action_space'])
+        policy.policy_network.load_state_dict(checkpoint['state_dict'])
         return policy

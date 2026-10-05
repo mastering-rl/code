@@ -1,3 +1,7 @@
-class ModelFreeLearner:
+from abc import ABC, abstractmethod
+
+
+class ModelFreeLearner(ABC):
+    @abstractmethod
     def execute(self, episodes=2000):
-        abstract
+        pass

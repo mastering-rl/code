@@ -83,7 +83,7 @@ class SingleAgentNode(Node):
             self.mdp, self, next_state, self.qfunction, self.bandit, reward, action
         )
 
-        # Find the probability of this outcome (only possible for model-based) for visualising tree
+        # Find the probability of this outcome (only possible for model-based)
         probability = 0.0
         for outcome, probability in self.mdp.get_transitions(self.state, action):
             if outcome == next_state:

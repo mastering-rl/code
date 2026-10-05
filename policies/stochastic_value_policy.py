@@ -19,3 +19,20 @@ class StochasticValuePolicy(StochasticPolicy):
             q_value = self.values.get_q_value(self.mdp, state, action)
             qfunction.update(state, action, q_value)
         return self.bandit.select(state, actions, qfunction)
+
+    def get_probability(self, state, actions):
+        qfunction = QTable()
+        for action in actions:
+            q_value = self.values.get_q_value(self.mdp, state, action)
+            qfunction.update(state, action, q_value)
+        return self.bandit.get_probability(state, actions, qfunction)
+    
+    ''' This policy is only for execution, it cannot be updated. '''
+    def update(self, state, action):
+        pass
+
+    def load(self, filename):
+        self.values.load(filename)
+
+    def save(self, filename):
+        self.values.save(filename)
