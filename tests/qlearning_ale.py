@@ -1,11 +1,12 @@
 import torch
-from multi_armed_bandit.epsilon_decreasing import EpsilonDecreasing
-from tests.plot import Plot
 
 from mastering_rl.learners.qlearning import QLearning
 from mastering_rl.markov_decision_processes.ale_wrapper import ALEWrapper
 from mastering_rl.policies.stochastic_q_policy import StochasticQPolicy
 from mastering_rl.qfunctions.deep_q_function import DeepQFunction
+from mastering_rl.multi_armed_bandit.epsilon_decreasing import EpsilonDecreasing
+from mastering_rl.tests.plot import Plot
+
 
 # if GPU is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

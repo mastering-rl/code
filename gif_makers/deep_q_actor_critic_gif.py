@@ -1,7 +1,6 @@
 from mastering_rl.gif_makers.gif_maker import GifMaker
-from multi_armed_bandit.epsilon_greedy import EpsilonGreedy
-from side_by_side_comparison import join_gif
-
+from mastering_rl.gif_makers.side_by_side_comparison import join_gif
+from mastering_rl.multi_armed_bandit.epsilon_greedy import EpsilonGreedy
 from mastering_rl.learners.q_actor_critic import QActorCritic
 from mastering_rl.learners.qlearning import QLearning
 from mastering_rl.markov_decision_processes.gridworld import GridWorld

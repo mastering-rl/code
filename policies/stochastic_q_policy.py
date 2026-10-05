@@ -24,6 +24,6 @@ class StochasticQPolicy(StochasticPolicy):
     def get_probability(self, state, action):
         raise NotImplementedError("get_probability not implemented for StochasticQPolicy.")
 
-    @staticmethod
-    def load(qfunction, filename):
+    @classmethod
+    def load(cls, filename):
         raise NotImplementedError("Loading a StochasticQPolicy is not implemented. Load the qfunction and create a StochasticQPolicy.")

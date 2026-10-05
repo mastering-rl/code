@@ -1,8 +1,7 @@
-from multi_armed_bandit.epsilon_greedy import EpsilonGreedy
-
-from mastering_rl.learners.sarsa import SARSA
 from mastering_rl.markov_decision_processes.contested_crossing import ContestedCrossing
 from mastering_rl.policies.q_policy import QPolicy
+from mastering_rl.learners.sarsa import SARSA
+from mastering_rl.multi_armed_bandit.epsilon_greedy import EpsilonGreedy
 from mastering_rl.qfunctions.qtable import QTable
 
 mdp = ContestedCrossing()

@@ -1,13 +1,11 @@
-from multi_armed_bandit.epsilon_greedy import EpsilonGreedy
-from tests.plot import Plot
-
 from mastering_rl.learners.qlearning import QLearning
 from mastering_rl.markov_decision_processes.contested_crossing import ContestedCrossing
 from mastering_rl.markov_decision_processes.gridworld import GridWorld
 from mastering_rl.policies.stochastic_q_policy import StochasticQPolicy
 from mastering_rl.qfunctions.qtable import QTable
 
-print("==========\nTabular Q-learning: Contested crossing\n==========")
+from mastering_rl.multi_armed_bandit.epsilon_greedy import EpsilonGreedy
+from mastering_rl.tests.plot import Plot
 
 
 episodes = 2000

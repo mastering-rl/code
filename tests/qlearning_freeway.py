@@ -1,7 +1,7 @@
 from mastering_rl.markov_decision_processes.ale_wrapper import ALEWrapper
 from mastering_rl.learners.qlearning import QLearning
 from mastering_rl.qfunctions.deep_q_function import DeepQFunction
-from tests.plot import Plot
+from mastering_rl.tests.plot import Plot
 
 version = "Freeway-ramDeterministic-v4"
 mdp = ALEWrapper(version=version)

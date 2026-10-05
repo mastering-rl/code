@@ -1,8 +1,8 @@
-from gridworld import GridWorld
-from double_qlearning import DoubleQLearning
-from deep_q_function import DeepQFunction
-from q_policy import QPolicy
-from multi_armed_bandit.epsilon_greedy import EpsilonGreedy
+from mastering_rl.markov_decision_processes.gridworld import GridWorld
+from mastering_rl.learners.double_qlearning import DoubleQLearning
+from mastering_rl.qfunctions.deep_q_function import DeepQFunction
+from mastering_rl.policies.q_policy import QPolicy
+from mastering_rl.multi_armed_bandit.epsilon_greedy import EpsilonGreedy
 
 gridworld = GridWorld()
 action_space = len(gridworld.get_actions())
